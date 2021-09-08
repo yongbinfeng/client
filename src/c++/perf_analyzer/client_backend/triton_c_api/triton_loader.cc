@@ -43,7 +43,6 @@ namespace triton { namespace perfanalyzer { namespace clientbackend {
 namespace tritoncapi {
 namespace {
 bool enforce_memory_type = false;
-TRITONSERVER_MemoryType requested_memory_type;
 bool helper_verbose = false;
 /// Helper function for allocating memory
 TRITONSERVER_Error*
@@ -71,7 +70,7 @@ ResponseAlloc(
   } else {
     void* allocated_ptr = nullptr;
     if (enforce_memory_type) {
-      *actual_memory_type = requested_memory_type;
+      *actual_memory_type = TritonLoader::GetRequestedMemoryType();
     }
 
     switch (*actual_memory_type) {
@@ -214,8 +213,7 @@ TritonLoader::Create(
         "Populating internal variables");
     FAIL_IF_ERR(
         GetSingleton()->LoadServerLibrary(), "Loading Triton Server library");
-    FAIL_IF_ERR(
-        GetSingleton()->StartTriton(memory_type), "Starting Triton Server");
+    FAIL_IF_ERR(GetSingleton()->StartTriton(), "Starting Triton Server");
   }
 
   return Error::Success;
@@ -240,6 +238,11 @@ TritonLoader::PopulateInternals(
 {
   RETURN_IF_ERROR(FolderExists(triton_server_path));
   RETURN_IF_ERROR(FolderExists(model_repository_path));
+  if (memory_type.compare("local") == 0) {
+    GetSingleton()->requested_memory_type_ = TRITONSERVER_MEMORY_CPU;
+  } else {
+    return Error("Undefined memory type" + memory_type);
+  }
   GetSingleton()->triton_server_path_ = triton_server_path;
   GetSingleton()->model_repository_path_ = model_repository_path;
   GetSingleton()->verbose_ = verbose;
@@ -248,7 +251,7 @@ TritonLoader::PopulateInternals(
 }
 
 Error
-TritonLoader::StartTriton(const std::string& memory_type)
+TritonLoader::StartTriton()
 {
   // Check API version.
   uint32_t api_version_major, api_version_minor;

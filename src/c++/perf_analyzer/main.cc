@@ -254,6 +254,7 @@ Usage(char** argv, const std::string& msg = std::string())
   std::cerr << "\t--input-data <\"zero\"|\"random\"|<path>>" << std::endl;
   std::cerr << "\t--shared-memory <\"system\"|\"cuda\"|\"none\">" << std::endl;
   std::cerr << "\t--output-shared-memory-size <size in bytes>" << std::endl;
+  std::cerr << "\t--capi-memory-type <\"local\">" << std::endl;
   std::cerr << "\t--shape <name:shape>" << std::endl;
   std::cerr << "\t--sequence-length <length>" << std::endl;
   std::cerr << "\t--string-length <length>" << std::endl;
@@ -541,6 +542,13 @@ Usage(char** argv, const std::string& msg = std::string())
       << std::endl;
 
   std::cerr << FormatMessage(
+                   " --capi-memory-type <\"local\">: Specifies "
+                   "the type of memory to use for input and output "
+                   "data while using the C API. Default is local.",
+                   18)
+            << std::endl;
+
+  std::cerr << FormatMessage(
                    " --shape: The shape used for the specified input. The "
                    "argument must be specified as 'name:shape' where the shape "
                    "is a comma-separated list for dimension sizes, for example "
@@ -699,7 +707,7 @@ main(int argc, char** argv)
   bool max_threads_specified = false;
 
   // C Api backend required info
-  const std::string DEFAULT_MEMORY_TYPE = "system";
+  const std::string DEFAULT_MEMORY_TYPE = "local";
   std::string triton_server_path;
   std::string model_repository_path;
   std::string memory_type = DEFAULT_MEMORY_TYPE;  // currently not used
@@ -736,6 +744,7 @@ main(int argc, char** argv)
       {"measurement-request-count", 1, 0, 27},
       {"triton-server-directory", 1, 0, 28},
       {"model-repository", 1, 0, 29},
+      {"capi-memory-type", 1, 0, 30},
       {0, 0, 0, 0}};
 
   // Parse commandline...
@@ -1000,6 +1009,15 @@ main(int argc, char** argv)
         model_repository_path = optarg;
         break;
       }
+      case 30: {
+        memory_type = optarg;
+        if (kind != cb::TRITON_C_API) {
+          Usage(
+              argv,
+              "unsupported, --service-kind triton_c_api need to be specified");
+        }
+        break;
+      }
       case 'v':
         extra_verbose = verbose;
         verbose = true;
@@ -1231,13 +1249,15 @@ main(int argc, char** argv)
       std::cerr << "Only target concurrency is supported by C API" << std::endl;
       return 1;
     } else if (shared_memory_type != pa::NO_SHARED_MEMORY) {
-      std::cerr << "Shared memory not yet supported by C API" << std::endl;
+      std::cerr << "Shared memory not supported by C API, please use "
+                   "--capi-memory-type for C API specific memory types"
+                << std::endl;
       return 1;
     } else if (
         triton_server_path.empty() || model_repository_path.empty() ||
         memory_type.empty()) {
       std::cerr
-          << "Not enough information to create C API. /lib/libtritonserver.so "
+          << "Not enough information to create C API. /lib/libtritonservCer.so "
              "directory:"
           << triton_server_path << " model repo:" << model_repository_path
           << " memory type:" << memory_type << std::endl;

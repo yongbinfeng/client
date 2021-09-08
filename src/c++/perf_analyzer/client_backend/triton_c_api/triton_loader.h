@@ -90,7 +90,7 @@ class TritonLoader : public tc::InferenceServerClient {
       bool verbose);
 
   static Error Delete();
-  static Error StartTriton(const std::string& memory_type);
+  static Error StartTriton();
 
   static Error LoadModel(
       const std::string& model_name, const std::string& model_version);
@@ -115,6 +115,11 @@ class TritonLoader : public tc::InferenceServerClient {
   {
     *infer_stat = GetSingleton()->infer_stat_;
     return Error::Success;
+  }
+
+  static const TRITONSERVER_memorytype_enum GetRequestedMemoryType()
+  {
+    return GetSingleton()->requested_memory_type_;
   }
 
   static bool ModelIsLoaded() { return GetSingleton()->model_is_loaded_; }
