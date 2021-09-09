@@ -104,6 +104,9 @@ enum BackendKind {
   TORCHSERVE = 2,
   TRITON_C_API = 3
 };
+
+enum CAPIMemoryType { LOCAL_MEMORY = 0, PINNED_MEMORY = 1, CUDA_MEMORY = 2 };
+
 enum ProtocolType { HTTP = 0, GRPC = 1, UNKNOWN = 2 };
 enum GrpcCompressionAlgorithm {
   COMPRESS_NONE = 0,
@@ -214,8 +217,9 @@ class ClientBackendFactory {
       const GrpcCompressionAlgorithm compression_algorithm,
       std::shared_ptr<Headers> http_headers,
       const std::string& triton_server_path,
-      const std::string& model_repository_path, const std::string& memory_type,
-      const bool verbose, std::shared_ptr<ClientBackendFactory>* factory);
+      const std::string& model_repository_path,
+      const CAPIMemoryType memory_type, const bool verbose,
+      std::shared_ptr<ClientBackendFactory>* factory);
 
   /// Create a ClientBackend.
   /// \param backend Returns a new Client backend object.
@@ -228,8 +232,8 @@ class ClientBackendFactory {
       const GrpcCompressionAlgorithm compression_algorithm,
       const std::shared_ptr<Headers> http_headers,
       const std::string& triton_server_path,
-      const std::string& model_repository_path, const std::string& memory_type,
-      const bool verbose)
+      const std::string& model_repository_path,
+      const CAPIMemoryType memory_type, const bool verbose)
       : kind_(kind), url_(url), protocol_(protocol),
         compression_algorithm_(compression_algorithm),
         http_headers_(http_headers), triton_server_path(triton_server_path),
@@ -245,7 +249,7 @@ class ClientBackendFactory {
   std::shared_ptr<Headers> http_headers_;
   std::string triton_server_path;
   std::string model_repository_path_;
-  std::string memory_type_;
+  CAPIMemoryType memory_type_;
   const bool verbose_;
 };
 
@@ -260,7 +264,7 @@ class ClientBackend {
       const GrpcCompressionAlgorithm compression_algorithm,
       std::shared_ptr<Headers> http_headers, const bool verbose,
       const std::string& library_directory, const std::string& model_repository,
-      const std::string& memory_type,
+      const CAPIMemoryType memory_type,
       std::unique_ptr<ClientBackend>* client_backend);
 
   /// Destructor for the client backend object

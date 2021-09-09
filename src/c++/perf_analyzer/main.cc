@@ -707,10 +707,9 @@ main(int argc, char** argv)
   bool max_threads_specified = false;
 
   // C Api backend required info
-  const std::string DEFAULT_MEMORY_TYPE = "local";
   std::string triton_server_path;
   std::string model_repository_path;
-  std::string memory_type = DEFAULT_MEMORY_TYPE;  // currently not used
+  cb::CAPIMemoryType capi_memory_type = cb::CAPIMemoryType::LOCAL_MEMORY;
 
   // {name, has_arg, *flag, val}
   static struct option long_options[] = {
@@ -1010,7 +1009,12 @@ main(int argc, char** argv)
         break;
       }
       case 30: {
-        memory_type = optarg;
+        std::string arg = optarg;
+        if (arg.compare("local") == 0) {
+          capi_memory_type = cb::CAPIMemoryType::LOCAL_MEMORY;
+        } else {
+          Usage(argv, "unsupported --capi-memory-type");
+        }
         if (kind != cb::TRITON_C_API) {
           Usage(
               argv,
@@ -1253,14 +1257,12 @@ main(int argc, char** argv)
                    "--capi-memory-type for C API specific memory types"
                 << std::endl;
       return 1;
-    } else if (
-        triton_server_path.empty() || model_repository_path.empty() ||
-        memory_type.empty()) {
+    } else if (triton_server_path.empty() || model_repository_path.empty()) {
       std::cerr
           << "Not enough information to create C API. /lib/libtritonservCer.so "
              "directory:"
           << triton_server_path << " model repo:" << model_repository_path
-          << " memory type:" << memory_type << std::endl;
+          << " memory type:" << capi_memory_type << std::endl;
       return 1;
     } else if (async) {
       std::cerr << "Async API not yet supported by C API" << std::endl;
@@ -1275,8 +1277,8 @@ main(int argc, char** argv)
   FAIL_IF_ERR(
       cb::ClientBackendFactory::Create(
           kind, url, protocol, compression_algorithm, http_headers,
-          triton_server_path, model_repository_path, memory_type, extra_verbose,
-          &factory),
+          triton_server_path, model_repository_path, capi_memory_type,
+          extra_verbose, &factory),
       "failed to create client factory");
 
   std::unique_ptr<cb::ClientBackend> backend;
@@ -1390,7 +1392,8 @@ main(int argc, char** argv)
         pa::ConcurrencyManager::Create(
             async, streaming, batch_size, max_threads, max_concurrency,
             sequence_length, string_length, string_data, zero_input, user_data,
-            shared_memory_type, output_shm_size, parser, factory, &manager),
+            shared_memory_type, output_shm_size, capi_memory_type, parser,
+            factory, &manager),
         "failed to create concurrency manager");
 
   } else if (using_request_rate_range) {
@@ -1399,7 +1402,8 @@ main(int argc, char** argv)
             async, streaming, measurement_window_ms, request_distribution,
             batch_size, max_threads, num_of_sequences, sequence_length,
             string_length, string_data, zero_input, user_data,
-            shared_memory_type, output_shm_size, parser, factory, &manager),
+            shared_memory_type, output_shm_size, capi_memory_type, parser,
+            factory, &manager),
         "failed to create request rate manager");
 
   } else {
@@ -1408,7 +1412,8 @@ main(int argc, char** argv)
             async, streaming, measurement_window_ms, request_intervals_file,
             batch_size, max_threads, num_of_sequences, sequence_length,
             string_length, string_data, zero_input, user_data,
-            shared_memory_type, output_shm_size, parser, factory, &manager),
+            shared_memory_type, output_shm_size, capi_memory_type, parser,
+            factory, &manager),
         "failed to create custom load manager");
   }
 

@@ -118,6 +118,7 @@ class LoadManager {
       const bool async, const bool streaming, const int32_t batch_size,
       const size_t max_threads, const size_t sequence_length,
       const SharedMemoryType shared_memory_type, const size_t output_shm_size,
+      const cb::CAPIMemoryType capi_memory_type,
       const std::shared_ptr<ModelParser>& parser,
       const std::shared_ptr<cb::ClientBackendFactory>& factory);
 
@@ -138,6 +139,11 @@ class LoadManager {
   /// \return cb::Error object indicating success or failure.
   cb::Error InitSharedMemory();
 
+  /// Helper function to allocate and prepare C API local memory.
+  /// from shared memory.
+  /// \return cb::Error object indicating success or failure.
+  cb::Error InitLocalMemory();
+
   /// Helper function to prepare the InferContext for sending inference request.
   /// \param ctx The target InferContext object.
   /// \return cb::Error object indicating success or failure.
@@ -148,6 +154,12 @@ class LoadManager {
   /// \param ctx The target InferContext object.
   /// \return cb::Error object indicating success or failure.
   cb::Error PrepareSharedMemoryInfer(InferContext* ctx);
+
+  /// Helper function to prepare the InferContext for sending inference
+  /// request in local memory.
+  /// \param ctx The target InferContext object.
+  /// \return cb::Error object indicating success or failure.
+  cb::Error PrepareLocalMemoryInfer(InferContext* ctx);
 
   /// Updates the input data to use for inference request
   /// \param inputs The vector of pointers to InferInput objects
@@ -189,6 +201,15 @@ class LoadManager {
       const std::vector<cb::InferInput*>& inputs, const int stream_index,
       const int step_index);
 
+  /// Helper function to update the C API local memory inputs
+  /// \param inputs The vector of pointers to InferInput objects
+  /// \param stream_index The data stream to use for next data
+  /// \param step_index The step index to use for next data
+  /// \return cb::Error object indicating success or failure.
+  cb::Error SetInputsLocalMemory(
+      const std::vector<cb::InferInput*>& inputs, const int stream_index,
+      const int step_index);
+
  protected:
   bool async_;
   bool streaming_;
@@ -196,6 +217,7 @@ class LoadManager {
   size_t max_threads_;
   size_t sequence_length_;
   SharedMemoryType shared_memory_type_;
+  cb::CAPIMemoryType capi_memory_type_;
   size_t output_shm_size_;
   bool on_sequence_model_;
 

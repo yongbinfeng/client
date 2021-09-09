@@ -45,13 +45,15 @@ ConcurrencyManager::Create(
     const std::string& string_data, const bool zero_input,
     std::vector<std::string>& user_data,
     const SharedMemoryType shared_memory_type, const size_t output_shm_size,
+    const cb::CAPIMemoryType capi_memory_type,
     const std::shared_ptr<ModelParser>& parser,
     const std::shared_ptr<cb::ClientBackendFactory>& factory,
     std::unique_ptr<LoadManager>* manager)
 {
   std::unique_ptr<ConcurrencyManager> local_manager(new ConcurrencyManager(
       async, streaming, batch_size, max_threads, max_concurrency,
-      sequence_length, shared_memory_type, output_shm_size, parser, factory));
+      sequence_length, shared_memory_type, output_shm_size, capi_memory_type,
+      parser, factory));
 
   local_manager->threads_config_.reserve(max_threads);
 
@@ -72,11 +74,13 @@ ConcurrencyManager::ConcurrencyManager(
     const bool async, const bool streaming, const int32_t batch_size,
     const size_t max_threads, const size_t max_concurrency,
     const size_t sequence_length, const SharedMemoryType shared_memory_type,
-    const size_t output_shm_size, const std::shared_ptr<ModelParser>& parser,
+    const size_t output_shm_size, const cb::CAPIMemoryType capi_memory_type,
+    const std::shared_ptr<ModelParser>& parser,
     const std::shared_ptr<cb::ClientBackendFactory>& factory)
     : LoadManager(
           async, streaming, batch_size, max_threads, sequence_length,
-          shared_memory_type, output_shm_size, parser, factory),
+          shared_memory_type, output_shm_size, capi_memory_type, parser,
+          factory),
       execute_(true), max_concurrency_(max_concurrency)
 {
   if (on_sequence_model_) {

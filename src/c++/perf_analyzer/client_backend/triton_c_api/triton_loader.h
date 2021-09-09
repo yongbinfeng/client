@@ -29,6 +29,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include "../../perf_utils.h"
 #include "../client_backend.h"
 #include "common.h"
 #include "shared_library.h"
@@ -86,8 +87,8 @@ class TritonLoader : public tc::InferenceServerClient {
 
   static Error Create(
       const std::string& triton_server_path,
-      const std::string& model_repository_path, const std::string& memory_type,
-      bool verbose);
+      const std::string& model_repository_path,
+      const CAPIMemoryType memory_type, bool verbose);
 
   static Error Delete();
   static Error StartTriton();
@@ -335,8 +336,8 @@ class TritonLoader : public tc::InferenceServerClient {
 
   Error PopulateInternals(
       const std::string& triton_server_path,
-      const std::string& model_repository_path, const std::string& memory_type,
-      bool verbose);
+      const std::string& model_repository_path,
+      const CAPIMemoryType memory_type, bool verbose);
 
   static TritonLoader* GetSingleton();
 

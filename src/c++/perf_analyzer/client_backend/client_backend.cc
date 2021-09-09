@@ -97,7 +97,7 @@ ClientBackendFactory::Create(
     const GrpcCompressionAlgorithm compression_algorithm,
     std::shared_ptr<Headers> http_headers,
     const std::string& triton_server_path,
-    const std::string& model_repository_path, const std::string& memory_type,
+    const std::string& model_repository_path, const CAPIMemoryType memory_type,
     const bool verbose, std::shared_ptr<ClientBackendFactory>* factory)
 {
   factory->reset(new ClientBackendFactory(
@@ -126,7 +126,7 @@ ClientBackend::Create(
     const GrpcCompressionAlgorithm compression_algorithm,
     std::shared_ptr<Headers> http_headers, const bool verbose,
     const std::string& triton_server_path,
-    const std::string& model_repository_path, const std::string& memory_type,
+    const std::string& model_repository_path, const CAPIMemoryType memory_type,
     std::unique_ptr<ClientBackend>* client_backend)
 {
   std::unique_ptr<ClientBackend> local_backend;

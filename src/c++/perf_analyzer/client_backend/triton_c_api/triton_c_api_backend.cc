@@ -38,16 +38,15 @@ namespace tritoncapi {
 Error
 TritonCApiClientBackend::Create(
     const std::string& triton_server_path,
-    const std::string& model_repository_path, const std::string& memory_type,
+    const std::string& model_repository_path, const CAPIMemoryType memory_type,
     const bool verbose, std::unique_ptr<ClientBackend>* client_backend)
 {
-  if (triton_server_path.empty() || model_repository_path.empty() ||
-      memory_type.empty()) {
+  if (triton_server_path.empty() || model_repository_path.empty()) {
     return Error(std::string(
         "Unable to create Triton C-API client backend. /lib/libtritonserver.so "
         "directory:" +
         triton_server_path + " model repo:" + model_repository_path +
-        " memory type:" + memory_type));
+        " memory type:" + std::to_string(memory_type)));
   }
   std::unique_ptr<TritonCApiClientBackend> triton_client_backend(
       new TritonCApiClientBackend());

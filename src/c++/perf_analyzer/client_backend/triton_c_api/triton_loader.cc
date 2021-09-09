@@ -199,7 +199,7 @@ FolderExists(const std::string& path)
 Error
 TritonLoader::Create(
     const std::string& triton_server_path,
-    const std::string& model_repository_path, const std::string& memory_type,
+    const std::string& model_repository_path, const CAPIMemoryType memory_type,
     bool verbose)
 {
   if (!GetSingleton()->ServerIsReady()) {
@@ -233,15 +233,17 @@ TritonLoader::Delete()
 Error
 TritonLoader::PopulateInternals(
     const std::string& triton_server_path,
-    const std::string& model_repository_path, const std::string& memory_type,
+    const std::string& model_repository_path, const CAPIMemoryType memory_type,
     bool verbose)
 {
   RETURN_IF_ERROR(FolderExists(triton_server_path));
   RETURN_IF_ERROR(FolderExists(model_repository_path));
-  if (memory_type.compare("local") == 0) {
-    GetSingleton()->requested_memory_type_ = TRITONSERVER_MEMORY_CPU;
-  } else {
-    return Error("Undefined memory type" + memory_type);
+  switch (memory_type) {
+    case CAPIMemoryType::LOCAL_MEMORY:
+      GetSingleton()->requested_memory_type_ = TRITONSERVER_MEMORY_CPU;
+      break;
+    default:
+      return Error("Undefined memory type" + memory_type);
   }
   GetSingleton()->triton_server_path_ = triton_server_path;
   GetSingleton()->model_repository_path_ = model_repository_path;

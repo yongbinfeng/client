@@ -66,6 +66,7 @@ class ConcurrencyManager : public LoadManager {
   /// \param shared_memory_type The type of shared memory to use for inputs.
   /// \param output_shm_size The size in bytes of the shared memory to
   /// allocate for the output.
+  /// \param capi_memory_type The type of memory to use for C API
   /// \param parser The ModelParser object to get the model details.
   /// \param factory The ClientBackendFactory object used to create
   /// client to the server.
@@ -78,6 +79,7 @@ class ConcurrencyManager : public LoadManager {
       const std::string& string_data, const bool zero_input,
       std::vector<std::string>& user_data,
       const SharedMemoryType shared_memory_type, const size_t output_shm_size,
+      const cb::CAPIMemoryType capi_memory_type,
       const std::shared_ptr<ModelParser>& parser,
       const std::shared_ptr<cb::ClientBackendFactory>& factory,
       std::unique_ptr<LoadManager>* manager);
@@ -93,7 +95,8 @@ class ConcurrencyManager : public LoadManager {
       const bool async, const bool streaming, const int32_t batch_size,
       const size_t max_threads, const size_t max_concurrency,
       const size_t sequence_length, const SharedMemoryType shared_memory_type,
-      const size_t output_shm_size, const std::shared_ptr<ModelParser>& parser,
+      const size_t output_shm_size, const cb::CAPIMemoryType capi_memory_type,
+      const std::shared_ptr<ModelParser>& parser,
       const std::shared_ptr<cb::ClientBackendFactory>& factory);
 
   struct ThreadConfig {

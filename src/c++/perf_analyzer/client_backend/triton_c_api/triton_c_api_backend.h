@@ -73,8 +73,9 @@ class TritonCApiClientBackend : public ClientBackend {
   /// or failure.
   static Error Create(
       const std::string& triton_server_path,
-      const std::string& model_repository_path, const std::string& memory_type,
-      const bool verbose, std::unique_ptr<ClientBackend>* client_backend);
+      const std::string& model_repository_path,
+      const CAPIMemoryType memory_type, const bool verbose,
+      std::unique_ptr<ClientBackend>* client_backend);
 
   ~TritonCApiClientBackend() { TritonLoader::Delete(); }
 

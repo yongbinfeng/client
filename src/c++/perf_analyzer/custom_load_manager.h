@@ -58,6 +58,7 @@ class CustomLoadManager : public RequestRateManager {
   /// \param shared_memory_type The type of shared memory to use for inputs.
   /// \param output_shm_size The size of the shared memory to allocate for the
   /// output.
+  /// \param capi_memory_type The type of memory to use for C API
   /// \param parser The ModelParser object to get the model details.
   /// \param factory The ClientBackendFactory object used to create
   /// client to the server.
@@ -72,6 +73,7 @@ class CustomLoadManager : public RequestRateManager {
       const std::string& string_data, const bool zero_input,
       std::vector<std::string>& user_data,
       const SharedMemoryType shared_memory_type, const size_t output_shm_size,
+      const cb::CAPIMemoryType capi_memory_type,
       const std::shared_ptr<ModelParser>& parser,
       const std::shared_ptr<cb::ClientBackendFactory>& factory,
       std::unique_ptr<LoadManager>* manager);
@@ -95,6 +97,7 @@ class CustomLoadManager : public RequestRateManager {
       const uint64_t measurement_window_ms, const size_t max_threads,
       const uint32_t num_of_sequences, const size_t sequence_length,
       const SharedMemoryType shared_memory_type, const size_t output_shm_size,
+      const cb::CAPIMemoryType capi_memory_type,
       const std::shared_ptr<ModelParser>& parser,
       const std::shared_ptr<cb::ClientBackendFactory>& factory);
 

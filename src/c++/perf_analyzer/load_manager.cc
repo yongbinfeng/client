@@ -200,13 +200,15 @@ LoadManager::LoadManager(
     const bool async, const bool streaming, const int32_t batch_size,
     const size_t max_threads, const size_t sequence_length,
     const SharedMemoryType shared_memory_type, const size_t output_shm_size,
+    const cb::CAPIMemoryType capi_memory_type,
     const std::shared_ptr<ModelParser>& parser,
     const std::shared_ptr<cb::ClientBackendFactory>& factory)
     : async_(async), streaming_(streaming), batch_size_(batch_size),
       max_threads_(max_threads), sequence_length_(sequence_length),
       shared_memory_type_(shared_memory_type),
-      output_shm_size_(output_shm_size), parser_(parser), factory_(factory),
-      using_json_data_(false), using_shared_memory_(false), next_seq_id_(1)
+      output_shm_size_(output_shm_size), capi_memory_type_(capi_memory_type),
+      parser_(parser), factory_(factory), using_json_data_(false),
+      using_shared_memory_(false), next_seq_id_(1)
 {
   on_sequence_model_ =
       ((parser_->SchedulerType() == ModelParser::SEQUENCE) ||
