@@ -25,6 +25,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <getopt.h>
+#include <rapidjson/filereadstream.h>
 #include <signal.h>
 #include <algorithm>
 #include "concurrency_manager.h"
@@ -654,6 +655,38 @@ Usage(char** argv, const std::string& msg = std::string())
   exit(1);
 }
 
+std::vector<std::string>
+ParseJson(const std::string& json_file)
+{
+  std::cout << "here" << json_file << std::endl;
+  std::vector<std::string> ret;
+  FILE* data_file = fopen(json_file.c_str(), "r");
+  if (data_file == nullptr) {
+    std::cerr << "failed to open multiple-model configuration file:" 
+              << json_file << std::endl;
+    return ret;
+  }
+  char readBuffer[65536];
+  rapidjson::FileReadStream fs(data_file, readBuffer, sizeof(readBuffer));
+  rapidjson::Document d{};
+  d.ParseStream(fs);
+  if (!d.IsObject()) {
+    std::cerr << "Failed to parse multiple-model configuration file: "
+              << json_file << std::endl;
+    return ret;
+  }
+  for (auto& m : d.GetObject()) {
+    if (m.name.IsString()) {
+      ret.push_back(m.name.GetString());
+      std::cout << "model name:" << ret.back() << std::endl;
+    } else {
+      std::cerr << "Provided model name is not a string" << std::endl;
+    }
+  }
+  return ret;
+}
+
+
 }  // namespace
 
 int
@@ -675,6 +708,7 @@ main(int argc, char** argv)
   double stability_threshold = 0.1;
   uint64_t measurement_window_ms = 5000;
   size_t max_trials = 10;
+  std::vector<std::string> model_names;
   std::string model_name;
   std::string model_version;
   std::string model_signature_name("serving_default");
@@ -1068,9 +1102,33 @@ main(int argc, char** argv)
         url_specified = true;
         url = optarg;
         break;
-      case 'm':
-        model_name = optarg;
+      case 'm': {
+        std::string tmp = optarg;
+        if (tmp.find(".json") != std::string::npos) {
+          model_names = ParseJson(tmp);
+          if (model_names.empty()) {
+            Usage(argv, "Failed to parse multi-model configuration json file");
+          }
+        } else {
+          // Parse strings in the case the model name is a .json or a comma
+          // separated list of names
+          std::string delimiter = ",";
+          size_t cpos = 0;
+          while (cpos != std::string::npos) {
+            size_t npos = tmp.find(delimiter, cpos);
+            size_t len = npos == std::string::npos ? npos : npos - cpos;
+            model_names.push_back(tmp.substr(cpos, len));
+            std::cout << "model_name: " << model_names.back() << std::endl;
+            cpos = npos == std::string::npos ? npos : ++npos;
+          }
+          if (model_names.empty()) {
+            Usage(argv, "Model name provided is empty");
+          }
+        }
+        model_name = model_names.front();
+        std::cout << "model_name: " << model_name << "end" << std::endl;
         break;
+      }
       case 'x':
         model_version = optarg;
         break;
