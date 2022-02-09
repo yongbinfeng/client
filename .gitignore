@@ -2,3 +2,4 @@
 /.vscode
 *.so
 node_modules
+src/java-api-bindings/*/target/*
