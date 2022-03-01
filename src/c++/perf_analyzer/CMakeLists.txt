@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2021, NVIDIA CORPORATION. All rights reserved.
+# Copyright 2020-2022, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -64,11 +64,21 @@ add_executable(
   ${PERF_ANALYZER_HDRS}
   $<TARGET_OBJECTS:json-utils-library>
 )
+
+find_package(MPI REQUIRED)
+
+target_include_directories(
+  perf_analyzer
+  PRIVATE
+    ${MPI_CXX_INCLUDE_DIRS}
+)
+
 target_link_libraries(
   perf_analyzer
   PRIVATE
     client-backend-library
     -lb64
+    ${MPI_CXX_LIBRARIES}
 )
 
 # If gpu is enabled then compile with CUDA dependencies
