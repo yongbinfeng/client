@@ -26,6 +26,7 @@
 #pragma once
 
 #include <thread>
+
 #include "concurrency_manager.h"
 #include "custom_load_manager.h"
 #include "model_parser.h"
@@ -63,7 +64,8 @@ enum MeasurementMode { TIME_WINDOWS = 0, COUNT_WINDOWS = 1 };
 struct EnsembleDurations {
   EnsembleDurations()
       : total_queue_time_avg_us(0), total_compute_time_avg_us(0),
-        total_cache_hit_time_avg_us(0), total_combined_cache_compute_time_avg_us(0)
+        total_cache_hit_time_avg_us(0),
+        total_combined_cache_compute_time_avg_us(0)
   {
   }
   uint64_t total_queue_time_avg_us;
@@ -421,6 +423,10 @@ class InferenceProfiler {
       const std::map<cb::ModelIdentifier, cb::ModelStatistics>& start_status,
       const std::map<cb::ModelIdentifier, cb::ModelStatistics>& end_status,
       ServerSideStats* server_stats);
+
+  /// \param current_rank_stability The stability of the current rank.
+  /// \return True if all MPI ranks are stable.
+  bool AllMPIRanksAreStable(bool current_rank_stability);
 
   bool verbose_;
   uint64_t measurement_window_ms_;
