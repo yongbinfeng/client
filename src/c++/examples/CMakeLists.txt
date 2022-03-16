@@ -32,50 +32,6 @@ if(WIN32)
 else()
 if(TRITON_ENABLE_CC_HTTP AND TRITON_ENABLE_CC_GRPC)
   #
-  # image_client
-  #
-  find_package(OpenCV REQUIRED)
-  add_executable(
-    image_client
-    image_client.cc
-    $<TARGET_OBJECTS:json-utils-library>
-  )
-  target_include_directories(
-    image_client
-    PRIVATE ${OpenCV_INCLUDE_DIRS}
-  )
-  target_link_libraries(
-    image_client
-    PRIVATE
-      grpcclient_static
-      httpclient_static
-      ${OpenCV_LIBS}
-  )
-  install(
-    TARGETS image_client
-    RUNTIME DESTINATION bin
-  )
-
-  #
-  # ensemble_image_client
-  #
-  add_executable(
-    ensemble_image_client
-    ensemble_image_client.cc
-    $<TARGET_OBJECTS:json-utils-library>
-  )
-  target_link_libraries(
-    ensemble_image_client
-    PRIVATE
-      grpcclient_static
-      httpclient_static
-  )
-  install(
-    TARGETS ensemble_image_client
-    RUNTIME DESTINATION bin
-  )
-
-  #
   # reuse_infer_objects_client
   #
   add_executable(

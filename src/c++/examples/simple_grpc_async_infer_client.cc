@@ -52,7 +52,7 @@ ValidateShapeAndDatatype(
   FAIL_IF_ERR(
       result->Shape(name, &shape), "unable to get shape for '" + name + "'");
   // Validate shape
-  if ((shape.size() != 2) || (shape[0] != 1) || (shape[1] != 16)) {
+  if ((shape.size() != 2) || (shape[0] != 1) || (shape[1] != 8)) {
     std::cerr << "error: received incorrect shapes for '" << name << "'"
               << std::endl;
     exit(1);
@@ -62,7 +62,7 @@ ValidateShapeAndDatatype(
       result->Datatype(name, &datatype),
       "unable to get datatype for '" + name + "'");
   // Validate datatype
-  if (datatype.compare("INT32") != 0) {
+  if (datatype.compare("FP32") != 0) {
     std::cerr << "error: received incorrect datatype for '" << name
               << "': " << datatype << std::endl;
     exit(1);
@@ -72,51 +72,32 @@ ValidateShapeAndDatatype(
 void
 ValidateResult(
     const std::shared_ptr<tc::InferResult> result,
-    std::vector<int32_t>& input0_data, std::vector<int32_t>& input1_data)
+    std::vector<int32_t>& input0_data)
 {
   // Validate the results...
-  ValidateShapeAndDatatype("OUTPUT0", result);
-  ValidateShapeAndDatatype("OUTPUT1", result);
+  ValidateShapeAndDatatype("embedding_output", result);
 
   // Get pointers to the result returned...
   int32_t* output0_data;
   size_t output0_byte_size;
   FAIL_IF_ERR(
       result->RawData(
-          "OUTPUT0", (const uint8_t**)&output0_data, &output0_byte_size),
-      "unable to get result data for 'OUTPUT0'");
-  if (output0_byte_size != 64) {
-    std::cerr << "error: received incorrect byte size for 'OUTPUT0': "
+          "embedding_output", (const uint8_t**)&output0_data, &output0_byte_size),
+      "unable to get result data for 'embedding_output'");
+  if (output0_byte_size != 32) {
+    std::cerr << "error: received incorrect byte size for 'embedding_output': "
               << output0_byte_size << std::endl;
     exit(1);
   }
 
-  int32_t* output1_data;
-  size_t output1_byte_size;
-  FAIL_IF_ERR(
-      result->RawData(
-          "OUTPUT1", (const uint8_t**)&output1_data, &output1_byte_size),
-      "unable to get result data for 'OUTPUT1'");
-  if (output0_byte_size != 64) {
-    std::cerr << "error: received incorrect byte size for 'OUTPUT1': "
-              << output0_byte_size << std::endl;
-    exit(1);
+  std::cout << "inputs " << std::endl;
+  for (size_t i = 0; i < 3; ++i) {
+    std::cout << i << " input " << input0_data[i] << std::endl;
   }
 
-  for (size_t i = 0; i < 16; ++i) {
-    std::cout << input0_data[i] << " + " << input1_data[i] << " = "
-              << *(output0_data + i) << std::endl;
-    std::cout << input0_data[i] << " - " << input1_data[i] << " = "
-              << *(output1_data + i) << std::endl;
-
-    if ((input0_data[i] + input1_data[i]) != *(output0_data + i)) {
-      std::cerr << "error: incorrect sum" << std::endl;
-      exit(1);
-    }
-    if ((input0_data[i] - input1_data[i]) != *(output1_data + i)) {
-      std::cerr << "error: incorrect difference" << std::endl;
-      exit(1);
-    }
+  std::cout << "outputs " << std::endl;
+  for (size_t i = 0; i < 8; ++i) {
+    std::cout << i << " output " << *(output0_data + i) << std::endl;
   }
 
   // Get full response
@@ -149,7 +130,7 @@ int
 main(int argc, char** argv)
 {
   bool verbose = false;
-  std::string url("localhost:8001");
+  std::string url("localhost:8021");
   tc::Headers http_headers;
   uint32_t client_timeout = 0;
 
@@ -178,11 +159,7 @@ main(int argc, char** argv)
     }
   }
 
-  // We use a simple model that takes 2 input tensors of 16 integers
-  // each and returns 2 output tensors of 16 integers each. One output
-  // tensor is the element-wise sum of the inputs and one output is
-  // the element-wise difference.
-  std::string model_name = "simple";
+  std::string model_name = "ExaTrk";
   std::string model_version = "";
 
   // Create a InferenceServerGrpcClient instance to communicate with the
@@ -192,57 +169,37 @@ main(int argc, char** argv)
       tc::InferenceServerGrpcClient::Create(&client, url, verbose),
       "unable to create grpc client");
 
-  // Create the data for the two input tensors. Initialize the first
-  // to unique integers and the second to all ones.
-  std::vector<int32_t> input0_data(16);
-  std::vector<int32_t> input1_data(16);
-  for (size_t i = 0; i < 16; ++i) {
+  // Create the data for the input tensors.
+  std::vector<int32_t> input0_data(3);
+  for (size_t i = 0; i < 3; ++i) {
     input0_data[i] = i;
-    input1_data[i] = 1;
   }
 
-  std::vector<int64_t> shape{1, 16};
+  std::vector<int64_t> shape{1, 3};
 
   // Initialize the inputs with the data.
   tc::InferInput* input0;
-  tc::InferInput* input1;
 
   FAIL_IF_ERR(
-      tc::InferInput::Create(&input0, "INPUT0", shape, "INT32"),
+      tc::InferInput::Create(&input0, "sp_features", shape, "FP32"),
       "unable to get INPUT0");
   std::shared_ptr<tc::InferInput> input0_ptr;
   input0_ptr.reset(input0);
-  FAIL_IF_ERR(
-      tc::InferInput::Create(&input1, "INPUT1", shape, "INT32"),
-      "unable to get INPUT1");
-  std::shared_ptr<tc::InferInput> input1_ptr;
-  input1_ptr.reset(input1);
 
   FAIL_IF_ERR(
       input0_ptr->AppendRaw(
           reinterpret_cast<uint8_t*>(&input0_data[0]),
           input0_data.size() * sizeof(int32_t)),
       "unable to set data for INPUT0");
-  FAIL_IF_ERR(
-      input1_ptr->AppendRaw(
-          reinterpret_cast<uint8_t*>(&input1_data[0]),
-          input1_data.size() * sizeof(int32_t)),
-      "unable to set data for INPUT1");
 
   // Generate the outputs to be requested.
   tc::InferRequestedOutput* output0;
-  tc::InferRequestedOutput* output1;
 
   FAIL_IF_ERR(
-      tc::InferRequestedOutput::Create(&output0, "OUTPUT0"),
-      "unable to get 'OUTPUT0'");
+      tc::InferRequestedOutput::Create(&output0, "embedding_output"),
+      "unable to get 'embedding_output'");
   std::shared_ptr<tc::InferRequestedOutput> output0_ptr;
   output0_ptr.reset(output0);
-  FAIL_IF_ERR(
-      tc::InferRequestedOutput::Create(&output1, "OUTPUT1"),
-      "unable to get 'OUTPUT1'");
-  std::shared_ptr<tc::InferRequestedOutput> output1_ptr;
-  output1_ptr.reset(output1);
 
 
   // The inference settings. Will be using default for now.
@@ -250,9 +207,8 @@ main(int argc, char** argv)
   options.model_version_ = model_version;
   options.client_timeout_ = client_timeout;
 
-  std::vector<tc::InferInput*> inputs = {input0_ptr.get(), input1_ptr.get()};
-  std::vector<const tc::InferRequestedOutput*> outputs = {output0_ptr.get(),
-                                                           output1_ptr.get()};
+  std::vector<tc::InferInput*> inputs = {input0_ptr.get()};
+  std::vector<const tc::InferRequestedOutput*> outputs = {output0_ptr.get()};
 
   // Send inference request to the inference server.
   std::mutex mtx;
@@ -270,7 +226,7 @@ main(int argc, char** argv)
                 std::cout << "Callback no." << i << " is called" << std::endl;
                 done_cnt++;
                 if (result_ptr->RequestStatus().IsOk()) {
-                  ValidateResult(result_ptr, input0_data, input1_data);
+                  ValidateResult(result_ptr, input0_data);
                 } else {
                   std::cerr << "error: Inference failed: "
                             << result_ptr->RequestStatus() << std::endl;
@@ -331,7 +287,7 @@ main(int argc, char** argv)
   // Get deferred response
   std::cout << "Getting results from deferred response" << std::endl;
   if (result_placeholder->RequestStatus().IsOk()) {
-    ValidateResult(result_placeholder, input0_data, input1_data);
+    ValidateResult(result_placeholder, input0_data);
   } else {
     std::cerr << "error: Inference failed: "
               << result_placeholder->RequestStatus() << std::endl;
