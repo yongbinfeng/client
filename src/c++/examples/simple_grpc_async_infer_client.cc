@@ -72,13 +72,13 @@ ValidateShapeAndDatatype(
 void
 ValidateResult(
     const std::shared_ptr<tc::InferResult> result,
-    std::vector<int32_t>& input0_data)
+    std::vector<float>& input0_data)
 {
   // Validate the results...
   ValidateShapeAndDatatype("embedding_output", result);
 
   // Get pointers to the result returned...
-  int32_t* output0_data;
+  float* output0_data;
   size_t output0_byte_size;
   FAIL_IF_ERR(
       result->RawData(
@@ -170,7 +170,7 @@ main(int argc, char** argv)
       "unable to create grpc client");
 
   // Create the data for the input tensors.
-  std::vector<int32_t> input0_data(3);
+  std::vector<float> input0_data(3);
   for (size_t i = 0; i < 3; ++i) {
     input0_data[i] = i;
   }
@@ -189,7 +189,7 @@ main(int argc, char** argv)
   FAIL_IF_ERR(
       input0_ptr->AppendRaw(
           reinterpret_cast<uint8_t*>(&input0_data[0]),
-          input0_data.size() * sizeof(int32_t)),
+          input0_data.size() * sizeof(float)),
       "unable to set data for INPUT0");
 
   // Generate the outputs to be requested.
